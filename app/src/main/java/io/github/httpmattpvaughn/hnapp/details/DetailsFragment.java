@@ -47,6 +47,7 @@ import static android.content.Context.CLIPBOARD_SERVICE;
 public class DetailsFragment extends Fragment implements DetailsContract.View, TextViewLinkHandler.OnLinkClickListener, TextViewLinkHandler.OnLinkLongClickListener {
 
     private DetailsContract.Presenter presenter;
+    private ColorInvertibleFrameLayout webViewContainer;
     private WebView webView;
     private SlidingUpPanelLayout slidingUpPanel;
     private RecyclerView commentsRecyclerView;
@@ -67,6 +68,7 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
         super.onViewCreated(view, savedInstanceState);
         assert getActivity() == null && getActivity() instanceof AppCompatActivity;
         webView = view.findViewById(R.id.article_web_view);
+        webViewContainer = view.findViewById(R.id.webview_invertible_container);
         setUpWebView();
 
         this.slidingUpPanel = view.findViewById(R.id.sliding_up_panel);
@@ -120,14 +122,11 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
         });
         View openInBrowser = slidingUpPanel.findViewById(R.id.open_in_browser);
         updateWebViewControls();
-        openInBrowser.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent openLinkIntent = new Intent(
-                        Intent.ACTION_VIEW,
-                        Uri.parse(webView.getUrl()));
-                getActivity().startActivity(openLinkIntent);
-            }
+        openInBrowser.setOnClickListener(view -> {
+            Intent openLinkIntent = new Intent(
+                    Intent.ACTION_VIEW,
+                    Uri.parse(webView.getUrl()));
+            getActivity().startActivity(openLinkIntent);
         });
     }
 
@@ -182,12 +181,7 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
         if (isAttached && isViewCreated) {
             Toolbar discussionToolbar = slidingUpPanel.findViewById(R.id.discussion_toolbar);
             discussionToolbar.setNavigationIcon(ContextCompat.getDrawable(getContext(), R.drawable.ic_arrow_back_white_24dp));
-            discussionToolbar.setNavigationOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    presenter.closeDetailsPage();
-                }
-            });
+            discussionToolbar.setNavigationOnClickListener(view -> presenter.closeDetailsPage());
 
             this.presenter.addView(this);
 
@@ -206,6 +200,9 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
         setUpWebView();
         this.webView.loadUrl(url);
         updateWebViewControls();
+
+        // When you open an article, reset color inversion
+        webViewContainer.setDrawInverted(false);
 
         View discussionToolbar = slidingUpPanel.findViewById(R.id.discussion_toolbar);
         View webviewBottomBar = slidingUpPanel.findViewById(R.id.webview_bottom_bar);
@@ -265,6 +262,13 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
         slidingUpPanel.setTouchEnabled(!isLocked);
     }
 
+
+    @Override
+    public void toggleInvertColors() {
+        webViewContainer.setDrawInverted(!webViewContainer.isDrawInverted());
+        Toast.makeText(getContext(), "Toggled colors", Toast.LENGTH_SHORT).show();
+    }
+
     // Set the preferred items from discussion page to match data stored in
     // item object
     @Override
@@ -273,7 +277,6 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
         this.commentAdapter = new CommentAdapter(this, this, new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                System.out.println("DEBUG: toggle comment collapse!");
                 int position = commentsRecyclerView.getChildLayoutPosition(view);
                 commentAdapter.toggleGroup(position);
             }
@@ -310,6 +313,8 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
     private void updateWebViewControls() {
         enableWebViewBackButton(webView.canGoBack());
         enableWebViewForwardsButton(webView.canGoForward());
+        slidingUpPanel.findViewById(R.id.invert_color_button)
+                .setOnClickListener(view -> toggleInvertColors());
     }
 
     private void enableWebViewForwardsButton(boolean enabled) {
@@ -334,12 +339,9 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
         if (enabled) {
             View backButton = slidingUpPanel.findViewById(R.id.back_button);
             backButton.setAlpha(1f);
-            backButton.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View view) {
-                    webView.goBack();
-                    updateWebViewControls();
-                }
+            backButton.setOnClickListener(view -> {
+                webView.goBack();
+                updateWebViewControls();
             });
         } else {
             View backButton = slidingUpPanel.findViewById(R.id.back_button);
@@ -355,7 +357,6 @@ public class DetailsFragment extends Fragment implements DetailsContract.View, T
 
     @Override
     public void onClickLink(TextView textView, String url) {
-        System.out.println("BADA BOOM");
         presenter.openLink(url);
     }
 

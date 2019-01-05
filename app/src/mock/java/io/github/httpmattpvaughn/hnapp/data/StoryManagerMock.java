@@ -16,8 +16,9 @@ import io.github.httpmattpvaughn.hnapp.data.model.Story;
 public class StoryManagerMock implements StoryRepository {
 
     private final int NUM_STORIES = 500;
-    private final Integer[] STORY_IDS = new Integer[500];
+    private final Integer[] STORY_IDS = new Integer[NUM_STORIES];
     private static final int STORIES_PER_PAGE = 25;
+    private static final int NUM_COMMENTS = 500;
 
     @Override
     public void getStoryIdArray(@NonNull GetStoryIdsCallback callback) {
@@ -31,29 +32,28 @@ public class StoryManagerMock implements StoryRepository {
 
     @Override
     public void getCommentsList(@NonNull GetCommentsListCallback callback, Story parent) {
-//        TODO- method stub
         List<Story> comments = new ArrayList<>(getFakeCommentsList());
         callback.onCommentsLoaded(comments, getFakeStory());
     }
 
     @Override
     public void loadCommentsIndividually(@NonNull LoadCommentsIndividuallyCallback callback, Story parent, int depth) {
-//        TODO- method stub
         List<Story> comments = new ArrayList<>(getFakeCommentsList());
         callback.onCommentsLoad(comments, comments);
     }
 
     @Override
     public void resetStoriesLoadedCount() {
-//        TODO- method stub
+        // This doesn't apply for now because we always load the exact same
+        // thing for every page
     }
 
     public static Story getFakeStory() {
         Story story = new Story();
         story.type = "story";
-        story.url = "https://google.com";
+        story.url = "https://news.ycombinator.com/";
         story.by = "matt";
-        story.descendants = 25;
+        story.descendants = NUM_COMMENTS;
         story.id = -1;
         story.score = 123;
         story.text = "Uh... I don't sing the song. Other people do. This is ve" +
@@ -78,6 +78,14 @@ public class StoryManagerMock implements StoryRepository {
     }
 
     public static List<Story> getFakeCommentsList() {
+        List<Story> fakeCommentList = new ArrayList<>();
+        for(int i = 0; i < NUM_COMMENTS / 5; i++) {
+            fakeCommentList.addAll(makeFiveFakeComments());
+        }
+        return fakeCommentList;
+    }
+
+    public static List<Story> makeFiveFakeComments() {
         Story story1 = new Story();
         story1.by = "mattoo";
         story1.text = "root";

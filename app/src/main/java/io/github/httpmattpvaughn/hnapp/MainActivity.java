@@ -12,9 +12,6 @@ import android.support.v7.app.AppCompatActivity;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.google.gson.Gson;
-
-import io.github.httpmattpvaughn.hnapp.data.model.Story;
 import io.github.httpmattpvaughn.hnapp.details.DetailsContract;
 import io.github.httpmattpvaughn.hnapp.details.DetailsPresenter;
 import io.github.httpmattpvaughn.hnapp.frontpage.FrontPageContract;
@@ -28,14 +25,12 @@ import io.github.httpmattpvaughn.hnapp.frontpage.FrontPagePresenter;
 public class MainActivity extends AppCompatActivity implements MainActivityContract.View,
         ViewPager.OnPageChangeListener, SharedPreferences.OnSharedPreferenceChangeListener {
 
-    private static final String CURRENT_STORY_KEY = "current_story";
-    private DisableableViewPager pager;
     private MainActivityContract.Presenter mainActivityPresenter;
     private FrontPageContract.Presenter frontPagePresenter;
     private DetailsContract.Presenter detailsPresenter;
     private static final int TOP_STORIES = 0;
     private static final int DETAILS_PAGE = 1;
-    private Story currentStory;
+    private DisableableViewPager pager;
 
     @Override
     protected void onStart() {
@@ -49,17 +44,9 @@ public class MainActivity extends AppCompatActivity implements MainActivityContr
         super.onCreate(createBundleNoFragmentRestore(savedInstanceState));
         setContentView(R.layout.activity_main);
 
-        if (savedInstanceState != null) {
-            System.out.println("savedInstanceState");
-            String json = savedInstanceState.getString(CURRENT_STORY_KEY);
-            if (json != null) {
-                System.out.println("json goot");
-                Gson gson = new Gson();
-                currentStory = gson.fromJson(json, Story.class);
-            }
-        }
-
         createPresenters();
+
+        mainActivityPresenter.parseSavedInstanceState(savedInstanceState);
 
         setUpMainPagePager();
     }
@@ -78,7 +65,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityContr
     }
 
     // A somewhat hacky approach to keeping android from restoring fragments.
-    // from: https://stackoverflow.com/questions/15519214/prevent-fragment-recovery-in-android
+    // Found here: https://stackoverflow.com/questions/15519214/prevent-fragment-recovery-in-android
     private static Bundle createBundleNoFragmentRestore(Bundle bundle) {
         if (bundle != null) {
             bundle.remove("android:support:fragments");
@@ -97,11 +84,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityContr
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        // Save... current currentStory, (get from detailsPresenter)
-        Story story = detailsPresenter.getCurrentStory();
-        Gson gson = new Gson();
-        String json = gson.toJson(story);
-        outState.putString(CURRENT_STORY_KEY, json);
+        mainActivityPresenter.bundleSavedInstanceState(outState);
         super.onSaveInstanceState(outState);
     }
 
@@ -117,9 +100,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityContr
             detailsPresenter = new DetailsPresenter(mainActivityPresenter);
             frontPagePresenter = new FrontPagePresenter(mainActivityPresenter);
 
-            if (currentStory != null) {
-                detailsPresenter.setCurrentStory(currentStory);
-            }
+            mainActivityPresenter.restoreStory();
         }
 
         mainActivityPresenter.attachView(this);
@@ -131,14 +112,12 @@ public class MainActivity extends AppCompatActivity implements MainActivityContr
     protected void onResume() {
         PreferenceManager.getDefaultSharedPreferences(this)
                 .registerOnSharedPreferenceChangeListener(this);
-
         super.onResume();
     }
 
-    // Keep presenters from being destroyed on config change
+    // Keep presenters from being destroyed on config changes
     @Override
     public Object onRetainCustomNonConfigurationInstance() {
-        System.out.println("Retainer");
         return new Presenters(mainActivityPresenter, detailsPresenter, frontPagePresenter);
     }
 
@@ -182,6 +161,7 @@ public class MainActivity extends AppCompatActivity implements MainActivityContr
     @Override
     public void openDetailsPage() {
         // switch to page 2 in viewpager
+        System.out.println("Opening details page");
         pager.setCurrentItem(DETAILS_PAGE, true);
     }
 
@@ -229,14 +209,16 @@ public class MainActivity extends AppCompatActivity implements MainActivityContr
     }
 
     @Override
-    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {}
+    public void onPageScrolled(int position, float positionOffset, int positionOffsetPixels) {
+    }
 
     @Override
-    public void onPageScrollStateChanged(int state) {}
+    public void onPageScrollStateChanged(int state) {
+    }
 
     @Override
     public void onSharedPreferenceChanged(SharedPreferences sharedPreferences, String key) {
-        if(key.equals(getString(R.string.theme_preference_key))) {
+        if (key.equals(getString(R.string.theme_preference_key))) {
             recreate();
         }
     }

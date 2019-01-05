@@ -23,10 +23,6 @@ public interface StoryRepository {
         void onCommentsLoaded(List<Story> comments, Story parent);
     }
 
-    interface GetCommentsCallback {
-        void onCommentsLoad(List<Story> comments, Story parent);
-    }
-
     interface LoadCommentsIndividuallyCallback {
         void onCommentsLoad(List<Story> comments, List<Story> parents);
     }

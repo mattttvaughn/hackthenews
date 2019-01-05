@@ -1,5 +1,7 @@
 package io.github.httpmattpvaughn.hnapp.data;
 
+import com.google.gson.Gson;
+
 import java.util.List;
 
 import io.github.httpmattpvaughn.hnapp.data.model.Story;
@@ -24,7 +26,6 @@ public interface HackerNewsService {
 
     @GET("topstories.json")
     Call<Integer[]> topStories();
-
 
     HackerNewsService retrofit = new Retrofit.Builder()
             .baseUrl(BASE_URL)

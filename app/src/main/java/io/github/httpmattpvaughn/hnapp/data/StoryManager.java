@@ -9,6 +9,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.httpmattpvaughn.hnapp.data.model.Story;
+import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.observers.DisposableObserver;
+import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -62,9 +66,10 @@ public class StoryManager implements StoryRepository {
                     Story story = response.body();
                     storyList.add(story);
                     storiesLoaded++;
-                    if (storyList.size() == STORIES_PER_PAGE) {
-                        callback.onPostsLoaded(storyList);
+                    if (storyList.size() != STORIES_PER_PAGE) {
+                        Log.e("HNapp", "Loaded an incorrect number of posts!");
                     }
+                    callback.onPostsLoaded(storyList);
                 }
 
                 @Override
@@ -78,17 +83,58 @@ public class StoryManager implements StoryRepository {
     @Override
     public void getCommentsList(@NonNull final GetCommentsListCallback callback,
                                 final Story parent) {
-        // check in cache for comments list
+        // check in cache for comments list with ID equal to this parent
         List<Story> thread = CommentsCache.getThread(parent.id);
         if (thread != null) {
             callback.onCommentsLoaded(thread, parent);
         } else {
+//            Observable.just(true)
+//                    .subscribeWith(new DisposableObserver<Boolean>() {
+//                        @Override
+//                        public void onNext(Boolean aBoolean) {
+//
+//                        }
+//
+//                        @Override
+//                        public void onError(Throwable e) {
+//
+//                        }
+//
+//                        @Override
+//                        public void onComplete() {
+//
+//                        }
+//                    }).subscribeOn(Schedulers.io())
+//                    .observeOn(AndroidSchedulers.mainThread())
+//                    .subscribe();
             FetchCommentsTask task = new FetchCommentsTask();
             task.execute(new ArrayList<>(), parent, callback);
         }
     }
 
     // Call callback in depth levels- load root comments, then their children, then their children's children, etc.
+    private static class FetchCommentsTask extends AsyncTask<Object, Object, List<Story>> {
+        private GetCommentsListCallback callback;
+        private Story parent;
+
+        @Override
+        protected void onPostExecute(List<Story> stories) {
+            super.onPostExecute(stories);
+            System.out.println("Stories loaded " + stories);
+            callback.onCommentsLoaded(stories, parent);
+            CommentsCache.addThread(stories, parent.id);
+        }
+
+        @Override
+        protected List<Story> doInBackground(Object[] objects) {
+            List<Story> comments = (List<Story>) objects[0];
+            parent = (Story) objects[1];
+            callback = (GetCommentsListCallback) objects[2];
+            return getAllComments(parent, comments, 0);
+        }
+
+    }
+
     public void getFakeCommentsIndividually(LoadCommentsIndividuallyCallback callback) {
         List<Story> stories = getFakeStories();
 
@@ -182,28 +228,6 @@ public class StoryManager implements StoryRepository {
         if (depth > 0) {
 //            callback.onCommentsLoaded(comments, parent);
         }
-    }
-
-    private static class FetchCommentsTask extends AsyncTask<Object, Object, List<Story>> {
-        private GetCommentsListCallback callback;
-        private Story parent;
-
-        @Override
-        protected void onPostExecute(List<Story> stories) {
-            super.onPostExecute(stories);
-            System.out.println("Stories loaded " + stories);
-            callback.onCommentsLoaded(stories, parent);
-            CommentsCache.addThread(stories, parent.id);
-        }
-
-        @Override
-        protected List<Story> doInBackground(Object[] objects) {
-            List<Story> comments = (List<Story>) objects[0];
-            parent = (Story) objects[1];
-            callback = (GetCommentsListCallback) objects[2];
-            return getAllComments(parent, comments, 0);
-        }
-
     }
 
     // Synchronously get comments

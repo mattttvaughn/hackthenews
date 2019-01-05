@@ -32,7 +32,6 @@ public class FrontPagePresenter implements FrontPageContract.Presenter {
             storyRepository.getStoryIdArray(new StoryRepository.GetStoryIdsCallback() {
                 @Override
                 public void onPostsLoaded(Integer[] storyIds) {
-                    System.out.println("Story ids loaded");
                     isStoryListLoaded = true;
                     storyRepository.getStoryList(new StoryRepository.GetStoryListCallback() {
                         @Override

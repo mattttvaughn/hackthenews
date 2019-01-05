@@ -149,8 +149,7 @@ public class FrontPageFragment extends Fragment implements FrontPageContract.Vie
     }
 
     @Override
-    public void onClick(View view) {
-        // call openDetailsPage() here...
+    public void onStoryClick(View view) {
         Story story = (Story) view.getTag();
         if (story.isStory()) {
             presenter.openArticle(story);
@@ -160,13 +159,13 @@ public class FrontPageFragment extends Fragment implements FrontPageContract.Vie
     }
 
     @Override
-    public void onClickComment(View view) {
+    public void onStoryCommentClick(View view) {
         Story story = (Story) view.getTag();
         presenter.openDiscussion(story);
     }
 
     @Override
-    public void onLongClick(View view) {
+    public void onStoryLongClick(View view) {
         // open up a dialog with options
         final CharSequence[] actions = new CharSequence[]{
                 "Open in browser",

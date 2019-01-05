@@ -1,5 +1,7 @@
 package io.github.httpmattpvaughn.hnapp;
 
+import android.os.Bundle;
+
 import java.util.List;
 
 import io.github.httpmattpvaughn.hnapp.data.model.Story;
@@ -53,5 +55,14 @@ public interface MainActivityContract {
 
         // Sets the comments in the details view
         void setComments(List<Story> comments);
+
+        // Handles serialized data after activity rebuild
+        void parseSavedInstanceState(Bundle savedInstanceState);
+
+        // Save current state to a bundle so it can be restored if needed
+        void bundleSavedInstanceState(Bundle outState);
+
+        //
+        void restoreStory();
     }
 }

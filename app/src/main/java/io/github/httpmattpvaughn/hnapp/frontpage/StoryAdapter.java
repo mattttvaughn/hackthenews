@@ -38,8 +38,9 @@ public class StoryAdapter extends RecyclerView.Adapter<StoryAdapter.ViewHolder> 
     }
 
     public void addStories(List<Story> stories) {
+        int originalSize = this.stories.size();
         this.stories.addAll(stories);
-        notifyDataSetChanged();
+        notifyItemRangeInserted(originalSize, originalSize + stories.size());
     }
 
     public void clearStories() {
@@ -52,7 +53,7 @@ public class StoryAdapter extends RecyclerView.Adapter<StoryAdapter.ViewHolder> 
         Context context = parent.getContext();
         LayoutInflater inflater = LayoutInflater.from(context);
 
-
+        // Choose which density layout the user prefers
         String density = PreferenceManager.getDefaultSharedPreferences(context)
                 .getString(context.getString(R.string.density_preference_key), null);
         int layout = R.layout.story_item;
@@ -97,7 +98,9 @@ public class StoryAdapter extends RecyclerView.Adapter<StoryAdapter.ViewHolder> 
             this.urlDrawable = itemView.findViewById(R.id.url_drawable);
         }
 
-        // Do it this way so we have an easy way to handle different types
+        // Use setStory() instead of updating the state in onBindViewHolder so
+        // we have a way to handle other data types (like polls etc., when we
+        // eventually those)
         public void setStory(final Story story) {
             Context context = this.root.getContext();
             Resources.Theme theme = context.getTheme();
@@ -131,20 +134,20 @@ public class StoryAdapter extends RecyclerView.Adapter<StoryAdapter.ViewHolder> 
             this.root.setOnLongClickListener(new View.OnLongClickListener() {
                 @Override
                 public boolean onLongClick(View v) {
-                    storyClickListener.onLongClick(root);
+                    storyClickListener.onStoryLongClick(root);
                     return false;
                 }
             }); // open up sharing/link copying options for story
             this.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    storyClickListener.onClick(root);
+                    storyClickListener.onStoryClick(root);
                 }
             });
             this.comments.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
-                    storyClickListener.onClickComment(root);
+                    storyClickListener.onStoryCommentClick(root);
                 }
             });
         }

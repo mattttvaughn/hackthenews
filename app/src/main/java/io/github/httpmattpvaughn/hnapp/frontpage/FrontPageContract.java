@@ -50,9 +50,8 @@ public interface FrontPageContract {
     }
 
     interface StoryClickListener {
-        void onClick(android.view.View view);
-        void onClickComment(android.view.View view);
-
-        void onLongClick(android.view.View view);
+        void onStoryClick(android.view.View view);
+        void onStoryCommentClick(android.view.View view);
+        void onStoryLongClick(android.view.View view);
     }
 }

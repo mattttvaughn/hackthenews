@@ -7,7 +7,7 @@
     android:orientation="horizontal"
     android:background="?attr/colorPrimary"
     android:visibility="invisible"
-    android:weightSum="3">
+    android:weightSum="4">
 
     <ImageView
         android:id="@+id/back_button"
@@ -28,6 +28,16 @@
         android:layout_marginRight="@dimen/webview_bottom_bar_drawable_spacing"
         android:layout_weight="1"
         android:src="@drawable/ic_arrow_forward_white_24dp"/>
+
+    <ImageView
+        android:id="@+id/invert_color_button"
+        android:layout_width="@dimen/webview_bottom_bar_drawable_size"
+        android:layout_height="@dimen/webview_bottom_bar_drawable_size"
+        android:layout_gravity="center_vertical"
+        android:layout_marginLeft="@dimen/webview_bottom_bar_drawable_spacing"
+        android:layout_marginRight="@dimen/webview_bottom_bar_drawable_spacing"
+        android:layout_weight="1"
+        android:src="@drawable/ic_invert_colors_white_24dp"/>
 
     <ImageView
         android:id="@+id/open_in_browser"

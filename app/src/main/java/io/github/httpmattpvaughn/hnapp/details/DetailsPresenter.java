@@ -25,10 +25,11 @@ public class DetailsPresenter implements DetailsContract.Presenter {
 
     @Override
     public void openArticle(Story item) {
-        assert item.isStory();
+        if(!item.isStory()) {
+            throw new IllegalArgumentException("Only story items can be opened in article view. Item type = " + item.type);
+        }
 
         this.currentStory = item;
-        // Show webview part of the detailsView
         view.openArticle(item.url);
         view.loadDiscussion(item);
         view.showCommentsLoading();
@@ -93,7 +94,7 @@ public class DetailsPresenter implements DetailsContract.Presenter {
         if (storyManager == null) {
             storyManager = Injection.provideStoryRepository();
         }
-//        Load comments together
+        // Load comments together
         storyManager.getCommentsList(new StoryRepository.GetCommentsListCallback() {
             @Override
             public void onCommentsLoaded(List<Story> comments, Story parent) {
@@ -102,20 +103,6 @@ public class DetailsPresenter implements DetailsContract.Presenter {
                 }
             }
         }, parentComment);
-//        Load comments individually
-//        storyManager.loadCommentsIndividually(new StoryRepository.GetCommentsListCallback() {
-//            @Override
-//            public void onCommentsLoaded(List<Story> comments, Story parent) {
-//                view.addComments(comments, parent);
-//            }
-//        }, parentComment, 0, new ArrayList<Story>());
-//        Load fake comments
-//        storyManager.getFakeCommentsIndividually(new StoryRepository.LoadCommentsIndividuallyCallback() {
-//            @Override
-//            public void onCommentsLoaded(List<Story> comments, List<Story> parents) {
-//                view.addFakeComments(comments, parents);
-//            }
-//        });
     }
 
     @Override

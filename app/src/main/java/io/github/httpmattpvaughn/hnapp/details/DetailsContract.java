@@ -38,6 +38,9 @@ public interface DetailsContract {
         void hideCommentsLoading();
 
         void setArticleViewLock(boolean isLocked);
+
+        // Toggle the articles in the webview
+        void toggleInvertColors();
     }
 
     // the *presenter* part of model-view-presenter

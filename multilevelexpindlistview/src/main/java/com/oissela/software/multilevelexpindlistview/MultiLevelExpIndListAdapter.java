@@ -104,8 +104,9 @@ public abstract class MultiLevelExpIndListAdapter extends RecyclerView.Adapter {
 
     public void insert(int position, ExpIndData item) {
         mData.add(position, item);
-        if (mNotifyOnChange)
+        if (mNotifyOnChange) {
             notifyItemInserted(position);
+        }
     }
 
     /**
