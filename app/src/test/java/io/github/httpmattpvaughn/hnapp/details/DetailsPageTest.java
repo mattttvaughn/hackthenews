@@ -71,7 +71,6 @@ public class DetailsPageTest {
         fakeStory.type = "-1";
         presenter.openDiscussion(fakeStory);
 
-        verify(view).setArticleViewLock(true);
         verify(view).openDiscussion(fakeStory.url);
         verify(view).loadDiscussion(fakeStory);
         verify(view).showCommentsLoading();

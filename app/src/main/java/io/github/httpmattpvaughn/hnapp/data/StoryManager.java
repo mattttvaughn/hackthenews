@@ -9,10 +9,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.github.httpmattpvaughn.hnapp.data.model.Story;
-import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.observers.DisposableObserver;
-import io.reactivex.schedulers.Schedulers;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
@@ -28,7 +24,8 @@ public class StoryManager implements StoryRepository {
     // Number of stories to be loaded at a time
     private static final int STORIES_PER_PAGE = 25;
 
-    private int storiesLoaded = 0;
+    // The number of stories that have been loaded so far
+    private int storiesLoadedCount = 0;
 
     @Override
     public void getStoryIdArray(@NonNull final GetStoryIdsCallback callback) {
@@ -50,13 +47,16 @@ public class StoryManager implements StoryRepository {
 
     @Override
     public void getStoryList(@NonNull final GetStoryListCallback callback) {
+        System.out.println("Getting story list");
         final List<Story> storyList = new ArrayList<>();
         if (storyIdArr == null) {
             return;
         }
-        for (int i = storiesLoaded; i < storiesLoaded + STORIES_PER_PAGE; i++) {
+        for (int i = storiesLoadedCount; i < storiesLoadedCount + STORIES_PER_PAGE; i++) {
+            // HN only allows us to load up to 500 stories, so return an empty
+            // list to indicate to the presenter that there are no more stories
             if (i > storyIdArr.length) {
-                callback.onPostsLoaded(new ArrayList<Story>());
+                callback.onPostsLoaded(new ArrayList<>());
                 return;
             }
             Call<Story> call = HackerNewsService.retrofit.item(storyIdArr[i]);
@@ -65,16 +65,24 @@ public class StoryManager implements StoryRepository {
                 public void onResponse(@NonNull Call<Story> call, @NonNull Response<Story> response) {
                     Story story = response.body();
                     storyList.add(story);
-                    storiesLoaded++;
-                    if (storyList.size() != STORIES_PER_PAGE) {
-                        Log.e("HNapp", "Loaded an incorrect number of posts!");
+                    storiesLoadedCount++;
+
+                    // Only send to presenter when we have received responses
+                    // for all stories
+                    if (storiesLoadedCount == STORIES_PER_PAGE) {
+                        callback.onPostsLoaded(storyList);
                     }
-                    callback.onPostsLoaded(storyList);
                 }
 
                 @Override
                 public void onFailure(@NonNull Call<Story> call, @NonNull Throwable t) {
-                    Log.e("HNapp", "Error loading story list. " + t);
+                    // Still increment the count because we still want to return
+                    // the stories, even if some fail to load
+                    storiesLoadedCount++;
+                    if (storiesLoadedCount == STORIES_PER_PAGE) {
+                        callback.onPostsLoaded(storyList);
+                    }
+                    Log.e("HNapp", "Error loading story. " + t);
                 }
             });
         }
@@ -258,7 +266,7 @@ public class StoryManager implements StoryRepository {
     }
 
     public void resetStoriesLoadedCount() {
-        this.storiesLoaded = 0;
+        this.storiesLoadedCount = 0;
     }
 
     private static class CommentsCache {

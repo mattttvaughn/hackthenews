@@ -2,7 +2,6 @@ package io.github.httpmattpvaughn.hnapp.frontpage;
 
 import android.content.ClipData;
 import android.content.ClipboardManager;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -27,6 +26,7 @@ import android.widget.Toast;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 import io.github.httpmattpvaughn.hnapp.R;
 import io.github.httpmattpvaughn.hnapp.data.model.Story;
@@ -89,20 +89,22 @@ public class FrontPageFragment extends Fragment implements FrontPageContract.Vie
         if (isAttached) {
             EndlessRecyclerViewScrollListener listener = new EndlessRecyclerViewScrollListener(layoutManager) {
                 @Override
-                public void onLoadMore(int page, int totalItemsCount, RecyclerView view) {
-                    presenter.loadStories();
+                public void onLoadMore(int page, int totalItemsCount) {
+                    System.out.println(page + ", " + totalItemsCount);
+                    if (false) {
+                        presenter.loadStories();
+                    }
                 }
             };
             frontPageRecyclerView.addOnScrollListener(listener);
 
-            swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-                @Override
-                public void onRefresh() {
-                    presenter.reloadStories();
-                }
+            swipeRefreshLayout.setOnRefreshListener(() -> {
+                System.out.println("Refresh");
+                presenter.reloadStories();
             });
 
             // Get data for front page
+            System.out.println("First load");
             presenter.loadStories();
         }
 
@@ -121,7 +123,7 @@ public class FrontPageFragment extends Fragment implements FrontPageContract.Vie
             // close drawer
         }
 
-        DrawerLayout drawer = getView().findViewById(R.id.drawer_layout);
+        DrawerLayout drawer = Objects.requireNonNull(getView()).findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
@@ -175,31 +177,28 @@ public class FrontPageFragment extends Fragment implements FrontPageContract.Vie
         final Story story = (Story) view.getTag();
         final String url = story.url;
         AlertDialog.OnClickListener listener =
-                new AlertDialog.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        String action = (String) actions[which];
-                        switch (action) {
-                            case "Open in browser":
-                                Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
-                                startActivity(browserIntent);
-                                break;
-                            case "Share":
-                                Intent sendIntent = new Intent();
-                                sendIntent.setAction(Intent.ACTION_SEND);
-                                sendIntent.putExtra(Intent.EXTRA_TEXT, url);
-                                sendIntent.setType("text/plain");
-                                startActivity(sendIntent);
-                                break;
-                            case "Copy":
-                                ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(CLIPBOARD_SERVICE);
-                                ClipData clip = ClipData.newPlainText("URL", url);
-                                clipboard.setPrimaryClip(clip);
-                                Toast.makeText(getContext(), "Text copied to clipboard", Toast.LENGTH_SHORT).show();
-                                break;
-                            default:
-                                break;
-                        }
+                (dialog, which) -> {
+                    String action = (String) actions[which];
+                    switch (action) {
+                        case "Open in browser":
+                            Intent browserIntent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                            startActivity(browserIntent);
+                            break;
+                        case "Share":
+                            Intent sendIntent = new Intent();
+                            sendIntent.setAction(Intent.ACTION_SEND);
+                            sendIntent.putExtra(Intent.EXTRA_TEXT, url);
+                            sendIntent.setType("text/plain");
+                            startActivity(sendIntent);
+                            break;
+                        case "Copy":
+                            ClipboardManager clipboard = (ClipboardManager) getContext().getSystemService(CLIPBOARD_SERVICE);
+                            ClipData clip = ClipData.newPlainText("URL", url);
+                            clipboard.setPrimaryClip(clip);
+                            Toast.makeText(getContext(), "Text copied to clipboard", Toast.LENGTH_SHORT).show();
+                            break;
+                        default:
+                            break;
                     }
                 };
         new AlertDialog.Builder(getContext())

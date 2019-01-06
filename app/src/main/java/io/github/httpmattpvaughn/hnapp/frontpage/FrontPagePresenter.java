@@ -1,7 +1,5 @@
 package io.github.httpmattpvaughn.hnapp.frontpage;
 
-import java.util.List;
-
 import io.github.httpmattpvaughn.hnapp.MainActivityContract;
 import io.github.httpmattpvaughn.hnapp.data.Injection;
 import io.github.httpmattpvaughn.hnapp.data.StoryRepository;
@@ -29,47 +27,24 @@ public class FrontPagePresenter implements FrontPageContract.Presenter {
             storyRepository = Injection.provideStoryRepository();
         }
         if (!isStoryListLoaded) {
-            storyRepository.getStoryIdArray(new StoryRepository.GetStoryIdsCallback() {
-                @Override
-                public void onPostsLoaded(Integer[] storyIds) {
-                    isStoryListLoaded = true;
-                    storyRepository.getStoryList(new StoryRepository.GetStoryListCallback() {
-                        @Override
-                        public void onPostsLoaded(List<Story> stories) {
-                            if (stories == null || stories.isEmpty()) {
-                                view.showErrorMessage("Error loading stories. Maybe you've reached the end?");
-                                return;
-                            }
-                            view.setRefreshing(false);
-                            view.addStories(stories);
-                            for (Story parents : stories) {
-                                storyRepository.getCommentsList(new StoryRepository.GetCommentsListCallback() {
-                                    @Override
-                                    public void onCommentsLoaded(List<Story> comments, Story parent) {
-                                        for (Story comment : comments) {
-                                            if (comment.by != null) {
-                                                if (comment.by.equals(parent.by)) {
-                                                    comment.setIsByOp(true);
-                                                }
-                                            }
-                                        }
-                                        if (parent.equals(parentPresenter.getCurrentStory())) {
-                                            parentPresenter.setComments(comments);
-                                        }
-                                    }
-                                }, parents);
-                            }
-                        }
-                    });
-                }
-            });
-        } else {
-            storyRepository.getStoryList(new StoryRepository.GetStoryListCallback() {
-                @Override
-                public void onPostsLoaded(List<Story> stories) {
+            // Load the list that contains links to all of the top 400 posts
+            storyRepository.getStoryIdArray(storyIds -> {
+                isStoryListLoaded = true;
+
+                // Load the next 25 stories
+                storyRepository.getStoryList(stories -> {
+                    if (stories == null || stories.isEmpty()) {
+                        view.showErrorMessage("Error loading stories. Maybe you've reached the end?");
+                        return;
+                    }
                     view.setRefreshing(false);
                     view.addStories(stories);
-                }
+                });
+            });
+        } else {
+            storyRepository.getStoryList(stories -> {
+                view.setRefreshing(false);
+                view.addStories(stories);
             });
         }
     }
